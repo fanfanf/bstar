@@ -22,28 +22,29 @@
     </div>
     <!--底部信息-->
     <div class="footer">
-      <p class="creat" @click="createAccount"><a href="#">Creat New Account</a></p>
-      <p class="change" @click="changePassword">Change Password</p>
+      <p class="creat" @click="createAccount"><span>Creat New Account</span></p>
+      <p class="change" @click="resetPassword">Change Password</p>
     </div>
   </div>
 </template>
 
 <script>
+  import {login} from '../../http/login.api.js'
   export default {
     data() {
       var validateEmail = (rule, value, callback) => {
         const reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/
         if (value === '') {
-          callback(new Error('请输入邮箱'))
+          callback(new Error('Please enter your email address'))
         } else if (!reg.test(value)) {
-          callback(new Error('邮箱格式不正确'))
+          callback(new Error('It is not an email address'))
         } else {
           callback()
         }
       }
       var validatePass = (rule, value, callback) => {
         if (value === '') {
-          callback(new Error('请输入密码'))
+          callback(new Error('Please enter tour password'))
         } else {
           callback()
         }
@@ -68,21 +69,66 @@
       submitForm(formName) {
         this.$refs[formName].validate((valid) => {
           if (valid) {
-             window.sessionStorage.setItem('test', 'test')
-             this.$router.push({path: '/selectFrame'})
+             const data = {
+               'password': this.ruleForm.pass,
+               'username': this.ruleForm.email,
+              //  'deviceId': '',
+              //  'appKey': '',
+               'mobileType': 2
+             }
+             this.loginFun(data).then((resp) => {
+              if (resp.STATE === 'SUCCESS') {
+                const loginFlag = {
+                  'uniqueId': resp.DATA.uniqueId,
+                  'loginToken': resp.DATA.loginToken,
+                  'nickName': resp.DATA.loginToken
+                }
+                window.sessionStorage.setItem('loginFlag', JSON.stringify(loginFlag))
+                console.log(window.sessionStorage.getItem('loginFlag'), 'ssssssssssssssssssssssssss')
+                this.$router.push({path: '/selectFrame'})
+              } else if (resp.STATE === 'FAIL') {
+                const errObj = {
+                  '1003': 'email not exist!',
+                  '1007': 'password error!'
+                }
+                if (resp.ERROR_CODE in errObj) {
+                  this.error(errObj[resp.ERROR_CODE])
+                } else {
+                  this.error('Login failed')
+                }
+              }
+             })
           } else {
-            console.log('登录失败')
             return false
           }
         })
       },
+      // 登录调用方法
+      loginFun(payload) {
+        return new Promise((resolve, reject) => {
+          login(payload).then((resp) => {
+            resolve(resp.body)
+          }).catch((err) => {
+            console.log(err, '调用login出错')
+          })
+        })
+      },
       // 跳转到注册页面
       createAccount() {
+        console.log('跳转到注册页面')
         this.$router.push({path: '/register'})
       },
-      // 跳转到修改密码页面
-      changePassword() {
-        this.$router.push({path: '/changePassword'})
+      // 跳转到重置密码页面
+      resetPassword() {
+        this.$router.push({path: '/resetPassword'})
+      },
+      // 错误提示
+      error(errorMessage) {
+        this.$message({
+          showClose: true,
+          message: errorMessage,
+          type: 'error'
+        })
       }
     }
   }
@@ -90,16 +136,20 @@
 
 <style scoped>
 @import '../../assets/css/common.css';
+.el-button {
+  margin-top: 30px;
+}
 .footer {
   font-size: 18px;
   margin-top: 36px;
   cursor: pointer;
+  color: #ffffff;
 }
 .creat {
   margin-bottom: 20px;
 }
-.creat a {
-  color: #ffffff;
+.creat span {
+  border-bottom: 1px solid white;
 }
 .back {
   font-size: 18px;

@@ -12,15 +12,21 @@ const router = new Router({
       }
     },
     {
+      path: '/',
+      component: (resolve) => {
+        require(['../components/common/Login.vue'], resolve)
+      }
+    },
+    {
       path: '/register',
       component: (resolve) => {
         require(['../components/common/Register.vue'], resolve)
       }
     },
     {
-      path: '/changePassword',
+      path: '/resetPassword',
       component: (resolve) => {
-        require(['../components/common/ChangePassword.vue'], resolve)
+        require(['../components/common/ResetPassword.vue'], resolve)
       }
     },
     {
@@ -38,11 +44,6 @@ const router = new Router({
       component: (resolve) => {
         require(['../components/src/AddFrame.vue'], resolve)
       }
-    }, {
-      path: '/logout',
-      component: (resolve) => {
-        require(['../components/common/Login.vue'], resolve)
-      }
     },  {
       path: '*',
       component: {
@@ -55,14 +56,16 @@ const router = new Router({
 })
 //使用钩子函数对路由进行权限跳转
 router.beforeEach((to, from, next) => {
-  var session = window.sessionStorage.getItem('test')
-  console.log(session, 'session')
   console.log(to.path, 'to.path')
-  if (session !== 'test' && to.path !== '/login') {
+  var loginFlag = JSON.parse(window.sessionStorage.getItem('loginFlag'))
+  if (!loginFlag) {
+    next()
+    return
+  }
+  if ((!loginFlag.uniqueId || !loginFlag.loginToken) && to.path !== '/login') {
     if (to.path === '/register') {
       next()
-    } else if (to.path === '/changePassword') {
-      console.log('走这了1111111111111')
+    } else if (to.path === '/resetPassword') {
       next()
     } else {
       next('/login')

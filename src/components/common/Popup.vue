@@ -14,9 +14,9 @@
             </div>
             <div class="modal-footer">
               <slot name="footer">
-                <div class="footer-sure" id="yes"  @click="close">Later
+                <div class="footer-sure" id="no"  @click="close">Later
                 </div>
-                <div class="footer-delt" id="no" @click="close">OK
+                <div class="footer-delt" id="yes" @click="close">OK
                 </div>
               </slot>
             </div>
@@ -195,17 +195,19 @@ export default {
   float: left;
   height: 58px;
   text-align: center;
-  color:#007aff;
+  color: #007aff;
   line-height: 55px;
   font-size: 22px;
+  cursor: pointer;
 }
 .footer-delt {
   float: left;
   width: 170px;
   height: 58px;
   text-align: center;
-  color:#007aff;
+  color: #007aff;
   line-height: 55px;
   font-size: 22px;
+  cursor: pointer;
 }
 </style>

@@ -9,9 +9,6 @@
     <!--注册-->
     <div class="form">
       <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="demo-ruleForm">
-        <el-form-item prop="nickName">
-          <el-input type="text" v-model="ruleForm.nickName" auto-complete="off" placeholder="Nick Name"></el-input>
-        </el-form-item>
         <el-form-item prop="email">
           <el-input type="text" v-model="ruleForm.email" auto-complete="off" placeholder="Email"></el-input>
         </el-form-item>
@@ -20,6 +17,12 @@
         </el-form-item>
         <el-form-item prop="confirmPass">
           <el-input type="password" v-model="ruleForm.confirmPass" auto-complete="off" placeholder="Confirm Password"></el-input>
+        </el-form-item>
+        <el-form-item prop="firstName">
+          <el-input type="text" v-model="ruleForm.firstName" auto-complete="off" placeholder="First Name"></el-input>
+        </el-form-item>
+        <el-form-item prop="lastName">
+          <el-input type="text" v-model="ruleForm.lastName" auto-complete="off" placeholder="Last Name"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="" @click="registerForm('ruleForm')">Register</el-button>
@@ -30,28 +33,29 @@
 </template>
 
 <script>
+  import {register} from '../../http/login.api.js'
   export default {
     data() {
       var validateName = (rule, value, callback) => {
         if (value === '') {
-          callback(new Error('请输入名称'))
+          callback(new Error('Please enter your nickName'))
         } else {
           callback()
         }
       }
       var validateEmail = (rule, value, callback) => {
-        const reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/
+        const reg = /^([a-zA-Z0-9_.-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/
         if (value === '') {
-          callback(new Error('请输入邮箱'))
-        } else if (reg.test(value)) {
-          callback(new Error('邮箱格式不正确'))
+          callback(new Error('Please enter your email address'))
+        } else if (!reg.test(value)) {
+          callback(new Error('It is not an email address'))
         } else {
           callback()
         }
       }
       var validatePass = (rule, value, callback) => {
         if (value === '') {
-          callback(new Error('请输入密码'))
+          callback(new Error('Please enter tour password'))
         } else {
           if (this.ruleForm.confirmPass !== '') {
             this.$refs.ruleForm.validateField('confirmPass')
@@ -61,22 +65,26 @@
       }
       var validateConfirmPass = (rule, value, callback) => {
         if (value === '') {
-          callback(new Error('请再次输入密码'))
+          callback(new Error('Please enter your password again'))
         } else if (value !== this.ruleForm.pass) {
-          callback(new Error('两次输入密码不一致!'))
+          callback(new Error('The two passwords don not match'))
         } else {
           callback()
         }
       }
       return {
         ruleForm: {
-          nickName: '',
+          firstName: '',
+          lastName: '',
           email: '',
           pass: '',
           confirmPass: ''
         },
         rules: {
-          nickName: [
+          firstName: [
+            {validator: validateName, trigger: 'blur'}
+          ],
+          lastName: [
             {validator: validateName, trigger: 'blur'}
           ],
           email: [
@@ -96,12 +104,49 @@
       registerForm(formName) {
         this.$refs[formName].validate((valid) => {
           if (valid) {
-            console.log('注册成功')
-            this.$router.push({path: '/login'})
+            const data = {
+              'username': this.ruleForm.email,
+              'password': encodeURIComponent(this.ruleForm.pass),
+              'nickName': encodeURIComponent(this.ruleForm.firstName + this.ruleForm.lastName),
+              'mobileType': 2
+            }
+            console.log(encodeURIComponent("http://www.w3school.com.cn"))
+            console.log(data, 'data')
+            this.registerFun(data).then((resp) => {
+              if (resp.STATE === 'SUCCESS') {
+                this.$router.push({path: '/login'})
+              } else if (resp.STATE === 'FAIL') {
+                const errObj = {
+                  '1017': 'email has been used!',
+                }
+                if (resp.ERROR_CODE in errObj) {
+                  this.error(errObj[resp.ERROR_CODE])
+                } else {
+                  this.error('Register failed')
+                }
+              }
+            })
           } else {
-            console.log('注册失败')
             return false
           }
+        })
+      },
+      // 注册调用方法
+      registerFun(payload) {
+        return new Promise((resolve, reject) => {
+          register(payload).then((resp) => {
+            resolve(resp.body)
+          }).catch((err) => {
+            console.log(err, '调用register出错')
+          })
+        })
+      },
+      // 错误提示
+      error(errorMessage) {
+        this.$message({
+          showClose: true,
+          message: errorMessage,
+          type: 'error'
         })
       }
     }
